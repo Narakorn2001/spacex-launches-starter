@@ -48,6 +48,8 @@ function doSearch() { store.setSearch(search.value) }
         <button :class="{active: view==='all'}" @click="switchView('all')">All</button>
         <button :class="{active: view==='past'}" @click="switchView('past')">Past</button>
         <button :class="{active: view==='upcoming'}" @click="switchView('upcoming')">Upcoming</button>
+        <button :class="{active: view==='success'}" @click="switchView('success')">Success</button>
+        <button :class="{active: view==='failed'}" @click="switchView('failed')">Failed</button>
       </div>
 
       <div class="controls">

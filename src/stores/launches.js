@@ -40,12 +40,22 @@ export const useLaunchesStore = defineStore('launches', {
     async load(view) {
       this.loading = true; this.error = ''
       try {
-        const fn = view === 'past' ? getLaunchesPast : view === 'upcoming' ? getLaunchesUpcoming : getLaunchesAll
+        const isFailed = view === 'failed'
+        const isSuccess = view === 'success'
+        const fn = (isFailed || isSuccess)
+          ? getLaunchesPast
+          : view === 'past' ? getLaunchesPast : view === 'upcoming' ? getLaunchesUpcoming : getLaunchesAll
         const { data } = await fn()
         if (import.meta?.env?.DEV) {
           console.log('[launches] fetched', view, Array.isArray(data) ? data.length : data)
         }
-        this.items = data
+        if (Array.isArray(data) && (isFailed || isSuccess)) {
+          this.items = data.filter(it => !it?.upcoming && (
+            isFailed ? it?.success === false : it?.success === true
+          ))
+        } else {
+          this.items = data
+        }
       } catch (e) {
         this.error = e?.message || 'Fetch error'
       } finally {
