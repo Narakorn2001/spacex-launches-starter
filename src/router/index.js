@@ -3,7 +3,7 @@ import LaunchesView from '../views/LaunchesView.vue'
 
 const routes = [
   { path: '/', redirect: '/launches/all' },
-  { path: '/launches/:view(all|past|upcoming|success|failed)', name: 'launches', component: LaunchesView, props: true }
+  { path: '/launches/:view(all|past|upcoming|failed)', name: 'launches', component: LaunchesView, props: true }
 ]
 
 const router = createRouter({

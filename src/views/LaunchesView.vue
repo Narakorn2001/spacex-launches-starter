@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useLaunchesStore } from '../stores/launches'
 import LaunchCard from '../components/LaunchCard.vue'
 import LaunchDialog from '../components/LaunchDialog.vue'
+import ExportMenu from '../components/ExportMenu.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -39,6 +40,13 @@ function openDetails(item) {
 
 watch(search, (v) => { store.setSearch(v) })
 function doSearch() { store.setSearch(search.value) }
+
+function toggleSelectionMode() {
+  store.toggleSelectionMode()
+  if (!store.selectionMode) {
+    store.clearSelection()
+  }
+}
 </script>
 
 <template>
@@ -55,6 +63,23 @@ function doSearch() { store.setSearch(search.value) }
       <div class="controls">
         <input class="select" placeholder="Search by name or flight #" v-model="search" @keyup.enter="doSearch" style="min-width:220px" />
         <button class="button" @click="doSearch">Search</button>
+        
+        <!-- Selection mode toggle -->
+        <button 
+          class="button" 
+          :class="{ active: store.selectionMode }"
+          @click="toggleSelectionMode"
+        >
+          {{ store.selectionMode ? 'Exit Selection' : 'Selection Mode' }}
+        </button>
+        
+        <!-- Selection count badge -->
+        <span v-if="store.selectionMode && store.selectedIds.size > 0" class="selection-badge">
+          Selected: {{ store.selectedIds.size }}
+        </span>
+        
+        <ExportMenu />
+        
         <label class="kbd">Sort by:</label>
         <select v-model="sortBy" class="select">
           <option value="date">Launch time</option>
@@ -87,3 +112,19 @@ function doSearch() { store.setSearch(search.value) }
     <LaunchDialog v-if="showModal && store.selected" :launch="store.selected" :details="store.details" @close="showModal=false; store.closeDetails()" />
   </div>
 </template>
+
+<style scoped>
+.selection-badge {
+  background: var(--accent);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.button.active {
+  background: var(--accent);
+  color: white;
+}
+</style>

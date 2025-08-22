@@ -1,18 +1,40 @@
 <script setup>
 import { computed } from 'vue'
 import { fmtDateTime, launchStatusBadge } from '../utils/format'
+import { useLaunchesStore } from '../stores/launches'
 
 const props = defineProps({
   item: { type: Object, required: true }
 })
 
+const store = useLaunchesStore()
+
 const badge = computed(() => launchStatusBadge(props.item))
 const crewCount = computed(() => Array.isArray(props.item.crew) ? props.item.crew.length : 0)
-const img = computed(() => props.item?.links?.patch?.small || props.item?.links?.flickr?.original?.[0] || '')
+const img = computed(() => {
+  const links = props.item?.links || {}
+  const yt = links.youtube_id
+  const youtubeThumb = yt ? `https://i.ytimg.com/vi/${yt}/hqdefault.jpg` : ''
+  return (
+    links?.patch?.small ||
+    links?.flickr?.small?.[0] ||
+    links?.flickr?.original?.[0] ||
+    links?.patch?.large ||
+    youtubeThumb ||
+    ''
+  )
+})
+
+const isSelected = computed(() => store.isSelected(props.item.id))
+const showCheckbox = computed(() => store.selectionMode)
+
 // local placeholder (bundled asset)
 import placeholderUrl from '../assets/placeholder.svg?url'
 const onImgError = (e) => { e.target.src = placeholderUrl }
 
+const handleCheckboxChange = () => {
+  store.toggle(props.item.id)
+}
 
 // ✅ อยู่ใน <script setup> ไม่แยก <script> ออกไปอีก
 const badgeStyle = (tone) => {
@@ -27,7 +49,17 @@ const badgeStyle = (tone) => {
 
 <template>
   <div class="card">
-    <img :src="img || placeholderUrl"
+    <!-- Selection checkbox overlay -->
+    <div v-if="showCheckbox" class="selection-overlay">
+      <input 
+        type="checkbox" 
+        :checked="isSelected"
+        @change="handleCheckboxChange"
+        class="selection-checkbox"
+      />
+    </div>
+    
+    <img :src="img || placeholderUrl" referrerpolicy="no-referrer" loading="lazy" decoding="async"
         class="thumb" :alt="item.name"
         @error="onImgError" />
     <div class="card-body">
@@ -44,3 +76,23 @@ const badgeStyle = (tone) => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.selection-overlay {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+}
+
+.selection-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.card {
+  position: relative;
+}
+</style>
