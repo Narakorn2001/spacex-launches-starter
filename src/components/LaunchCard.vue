@@ -1,14 +1,14 @@
 <script setup>
+import { computed } from 'vue'
 import { fmtDateTime, launchStatusBadge } from '../utils/format'
 
 const props = defineProps({
   item: { type: Object, required: true }
 })
 
-const badge = launchStatusBadge(props.item)
-const crewCount = Array.isArray(props.item.crew) ? props.item.crew.length : 0
-// const img = props.item?.links?.patch?.small || props.item?.links?.flickr?.original?.[0] || ''
-const img = props.item?.links?.patch?.small || props.item?.links?.flickr?.original?.[0] || ''
+const badge = computed(() => launchStatusBadge(props.item))
+const crewCount = computed(() => Array.isArray(props.item.crew) ? props.item.crew.length : 0)
+const img = computed(() => props.item?.links?.patch?.small || props.item?.links?.flickr?.original?.[0] || '')
 // local placeholder (bundled asset)
 import placeholderUrl from '../assets/placeholder.svg?url'
 const onImgError = (e) => { e.target.src = placeholderUrl }

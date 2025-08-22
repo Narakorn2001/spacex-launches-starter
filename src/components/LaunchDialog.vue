@@ -35,7 +35,7 @@ const emit = defineEmits(['close'])
             <h4 style="margin:0 0 8px 0">Crew ({{ details?.crew?.length || 0 }})</h4>
             <div v-if="details?.crew?.length">
               <table class="table">
-                <thead><tr><th>Name</th><th>Role</th></tr></thead>
+                <thead><tr><th>Name</th><th>Agency</th></tr></thead>
                 <tbody>
                   <tr v-for="c in details.crew" :key="c.id">
                     <td>{{ c.name }}</td>

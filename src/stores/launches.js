@@ -10,6 +10,7 @@ export const useLaunchesStore = defineStore('launches', {
     details: null,
     sortBy: 'date',   // 'date' | 'name'
     sortDir: 'desc',  // 'asc' | 'desc'
+    searchTerm: ''
   }),
   getters: {
     sorted(state) {
@@ -22,15 +23,28 @@ export const useLaunchesStore = defineStore('launches', {
         return state.sortDir === 'asc' ? cmp : -cmp
       })
       return arr
+    },
+    filteredSorted(state) {
+      const term = state.searchTerm?.trim().toLowerCase()
+      const base = this.sorted
+      if (!term) return base
+      return base.filter(it => {
+        const name = (it?.name || '').toLowerCase()
+        const flight = String(it?.flight_number || '')
+        return name.includes(term) || flight.includes(term)
+      })
     }
   },
   actions: {
+    setSearch(term) { this.searchTerm = term ?? '' },
     async load(view) {
       this.loading = true; this.error = ''
       try {
         const fn = view === 'past' ? getLaunchesPast : view === 'upcoming' ? getLaunchesUpcoming : getLaunchesAll
         const { data } = await fn()
-        console.log('[launches] fetched', view, Array.isArray(data) ? data.length : data)
+        if (import.meta?.env?.DEV) {
+          console.log('[launches] fetched', view, Array.isArray(data) ? data.length : data)
+        }
         this.items = data
       } catch (e) {
         this.error = e?.message || 'Fetch error'
@@ -42,10 +56,14 @@ export const useLaunchesStore = defineStore('launches', {
       this.selected = launch
       this.details = null
       try {
-        const crewIds = (launch.crew ?? []).map(c => typeof c === 'string' ? c : (c.crew || c))
+        const crewIds = (launch.crew ?? [])
+          .map(c => typeof c === 'string' ? c : (c.crew || c))
+          .filter(Boolean)
+        const rocketIds = [launch.rocket].filter(Boolean)
+        const launchpadIds = [launch.launchpad].filter(Boolean)
         const [rockets, launchpads, crews] = await Promise.all([
-          queryByIds('rockets', [launch.rocket]),
-          queryByIds('launchpads', [launch.launchpad]),
+          rocketIds.length ? queryByIds('rockets', rocketIds) : Promise.resolve({ data: { docs: [] } }),
+          launchpadIds.length ? queryByIds('launchpads', launchpadIds) : Promise.resolve({ data: { docs: [] } }),
           crewIds.length ? queryByIds('crew', crewIds) : Promise.resolve({ data: { docs: [] } })
         ])
         this.details = {
@@ -54,7 +72,7 @@ export const useLaunchesStore = defineStore('launches', {
           crew: crews.data.docs ?? []
         }
       } catch (e) {
-        console.error(e)
+        if (import.meta?.env?.DEV) console.error('[launches] details error', e)
       }
     },
     closeDetails() {

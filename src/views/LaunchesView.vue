@@ -12,6 +12,7 @@ const store = useLaunchesStore()
 const view = ref(route.params.view || 'all')
 const sortBy = ref(store.sortBy)
 const sortDir = ref(store.sortDir)
+const search = ref(store.searchTerm)
 const showModal = ref(false)
 
 onMounted(async () => {
@@ -35,6 +36,9 @@ function switchView(v) {
 function openDetails(item) {
   store.openDetails(item).then(() => { showModal.value = true })
 }
+
+watch(search, (v) => { store.setSearch(v) })
+function doSearch() { store.setSearch(search.value) }
 </script>
 
 <template>
@@ -47,6 +51,8 @@ function openDetails(item) {
       </div>
 
       <div class="controls">
+        <input class="select" placeholder="Search by name or flight #" v-model="search" @keyup.enter="doSearch" style="min-width:220px" />
+        <button class="button" @click="doSearch">Search</button>
         <label class="kbd">Sort by:</label>
         <select v-model="sortBy" class="select">
           <option value="date">Launch time</option>
@@ -64,12 +70,12 @@ function openDetails(item) {
      style="padding:12px;border:1px solid var(--border);border-radius:12px;">
       <strong>Error:</strong> {{ store.error }}
       <div style="margin-top:8px">
-        <button class="button" @click="store.load(view)">Retry</button>
+        <button class="button" @click="store.load(view.value)">Retry</button>
       </div>
     </div>
 
     <div v-else class="grid">
-      <LaunchCard v-for="item in store.sorted" :key="item.id" :item="item">
+      <LaunchCard v-for="item in store.filteredSorted" :key="item.id" :item="item">
         <template #actions>
           <button class="button" @click="openDetails(item)">View details</button>
         </template>
